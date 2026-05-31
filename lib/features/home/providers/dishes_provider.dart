@@ -89,19 +89,32 @@ class DishesNotifier extends AsyncNotifier<List<Dish>> {
       'stock': stock,
       'category': category,
     }).eq('id', id);
-    await refresh();
+    final current = state.value ?? [];
+    state = AsyncData(current
+        .map((d) => d.id == id
+            ? d.copyWith(
+                name: name, price: price, stock: stock, category: category)
+            : d)
+        .toList());
   }
 
   Future<void> addStock(String id, double currentStock, double qty) async {
-    await supabase
-        .from('dishes')
-        .update({'stock': currentStock + qty}).eq('id', id);
-    await refresh();
+    final newStock = currentStock + qty;
+    await supabase.from('dishes').update({'stock': newStock}).eq('id', id);
+    final current = state.value ?? [];
+    state = AsyncData(current
+        .map((d) => d.id == id ? d.copyWith(stock: newStock) : d)
+        .toList());
   }
 
   Future<void> deleteDish(String id) async {
+    // Сначала удаляем связанные продажи (foreign key constraint)
+    await supabase.from('sales').delete().eq('dish_id', id);
+    // Потом удаляем блюдо
     await supabase.from('dishes').delete().eq('id', id);
-    await refresh();
+    // Убираем из локального состояния сразу
+    final current = state.value ?? [];
+    state = AsyncData(current.where((d) => d.id != id).toList());
   }
 }
 

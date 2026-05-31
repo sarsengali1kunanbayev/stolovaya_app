@@ -36,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
+    // onAuthStateChange убран — переход делаем вручную в _login()
   }
 
   @override
@@ -68,23 +69,193 @@ class _LoginScreenState extends State<LoginScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ ${e.message}'),
-            backgroundColor: AppColors.neonRed,
-          ),
+              content: Text('❌ ${e.message}'),
+              backgroundColor: AppColors.neonRed),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ ${e.toString()}'),
-            backgroundColor: AppColors.neonRed,
-          ),
+              content: Text('❌ ${e.toString()}'),
+              backgroundColor: AppColors.neonRed),
         );
       }
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
+  }
+
+  void _showRegisterDialog() {
+    final nameCtrl = TextEditingController();
+    final regEmailCtrl = TextEditingController();
+    final regPassCtrl = TextEditingController();
+    bool regLoading = false;
+    bool regObscure = true;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(20),
+          child: GlassCard(
+            borderRadius: 20,
+            glowColor: AppColors.neonPurple,
+            shimmerBorder: true,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.neonPurple.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.admin_panel_settings,
+                          color: AppColors.neonPurple, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text('Регистрация администратора',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          )),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: const Icon(Icons.close,
+                          color: AppColors.textSecondary, size: 20),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: nameCtrl,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(
+                    labelText: 'Имя',
+                    prefixIcon: Icon(Icons.badge_outlined, size: 18),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: regEmailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.alternate_email, size: 18),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: regPassCtrl,
+                  obscureText: regObscure,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Пароль',
+                    prefixIcon: const Icon(Icons.lock_outline, size: 18),
+                    suffixIcon: GestureDetector(
+                      onTap: () =>
+                          setDialogState(() => regObscure = !regObscure),
+                      child: Icon(
+                        regObscure
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        size: 18,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: regLoading
+                        ? null
+                        : () async {
+                            if (regEmailCtrl.text.trim().isEmpty ||
+                                regPassCtrl.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Заполните все поля'),
+                                  backgroundColor: AppColors.neonOrange,
+                                ),
+                              );
+                              return;
+                            }
+                            setDialogState(() => regLoading = true);
+                            try {
+                              final res = await supabase.auth.signUp(
+                                email: regEmailCtrl.text.trim(),
+                                password: regPassCtrl.text.trim(),
+                                data: {
+                                  'name': nameCtrl.text.trim(),
+                                  'role': 'admin'
+                                },
+                              );
+                              // Добавляем в profiles как admin
+                              if (res.user != null) {
+                                await supabase.from('profiles').insert({
+                                  'id': res.user!.id,
+                                  'name': nameCtrl.text.trim(),
+                                  'role': 'admin',
+                                });
+                              }
+                              if (ctx.mounted) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('✅ Администратор зарегистрирован'),
+                                    backgroundColor: AppColors.neonGreen,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text('❌ $e'),
+                                      backgroundColor: AppColors.neonRed),
+                                );
+                              }
+                            } finally {
+                              if (ctx.mounted)
+                                setDialogState(() => regLoading = false);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.neonPurple,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: regLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Text('Зарегистрировать',
+                            style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -93,13 +264,11 @@ class _LoginScreenState extends State<LoginScreen>
       backgroundColor: AppColors.bgDeep,
       body: Stack(
         children: [
-          // Фоновый радиальный градиент
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(gradient: AppGradients.bgRadial),
             ),
           ),
-          // Декоративные глоу-точки
           Positioned(
             top: -80,
             right: -80,
@@ -108,12 +277,10 @@ class _LoginScreenState extends State<LoginScreen>
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.neonCyan.withOpacity(0.12),
-                    Colors.transparent,
-                  ],
-                ),
+                gradient: RadialGradient(colors: [
+                  AppColors.neonCyan.withOpacity(0.12),
+                  Colors.transparent,
+                ]),
               ),
             ),
           ),
@@ -125,17 +292,13 @@ class _LoginScreenState extends State<LoginScreen>
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.neonPurple.withOpacity(0.12),
-                    Colors.transparent,
-                  ],
-                ),
+                gradient: RadialGradient(colors: [
+                  AppColors.neonPurple.withOpacity(0.12),
+                  Colors.transparent,
+                ]),
               ),
             ),
           ),
-
-          // Форма входа
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -147,7 +310,6 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Логотип
                         Container(
                           width: 88,
                           height: 88,
@@ -156,33 +318,22 @@ class _LoginScreenState extends State<LoginScreen>
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: AppShadows.neonCyan,
                           ),
-                          child: const Icon(
-                            Icons.restaurant_menu,
-                            color: Colors.white,
-                            size: 44,
-                          ),
+                          child: const Icon(Icons.restaurant_menu,
+                              color: Colors.white, size: 44),
                         ),
                         const SizedBox(height: 24),
-                        const Text(
-                          'Столовая',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1,
-                          ),
-                        ),
+                        const Text('Столовая',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -1,
+                            )),
                         const SizedBox(height: 6),
-                        const Text(
-                          'Учёт остатков и смен',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                          ),
-                        ),
+                        const Text('Учёт остатков и смен',
+                            style: TextStyle(
+                                color: AppColors.textSecondary, fontSize: 14)),
                         const SizedBox(height: 40),
-
-                        // Карточка формы
                         GlassCard(
                           borderRadius: 20,
                           glowColor: AppColors.neonCyan,
@@ -191,17 +342,13 @@ class _LoginScreenState extends State<LoginScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Text(
-                                'Вход в систему',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 18,
-                                ),
-                              ),
+                              const Text('Вход в систему',
+                                  style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 18,
+                                  )),
                               const SizedBox(height: 24),
-
-                              // Email
                               TextField(
                                 controller: emailCtrl,
                                 keyboardType: TextInputType.emailAddress,
@@ -214,8 +361,6 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ),
                               const SizedBox(height: 14),
-
-                              // Пароль
                               TextField(
                                 controller: passwordCtrl,
                                 obscureText: obscurePass,
@@ -240,8 +385,6 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ),
                               const SizedBox(height: 24),
-
-                              // Кнопка входа
                               SizedBox(
                                 height: 52,
                                 child: ElevatedButton(
@@ -252,42 +395,52 @@ class _LoginScreenState extends State<LoginScreen>
                                     disabledBackgroundColor:
                                         AppColors.neonCyan.withOpacity(0.5),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
+                                        borderRadius:
+                                            BorderRadius.circular(14)),
                                     elevation: 0,
-                                  ).copyWith(
-                                    overlayColor: WidgetStateProperty.all(
-                                      Colors.black.withOpacity(0.1),
-                                    ),
                                   ),
                                   child: isLoading
                                       ? const SizedBox(
                                           width: 22,
                                           height: 22,
                                           child: CircularProgressIndicator(
-                                            strokeWidth: 2.5,
-                                            color: AppColors.bgDeep,
-                                          ),
-                                        )
-                                      : const Text(
-                                          'Войти',
+                                              strokeWidth: 2.5,
+                                              color: AppColors.bgDeep))
+                                      : const Text('Войти',
                                           style: TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 16,
-                                          ),
-                                        ),
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 16)),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            'Регистрация (администратор)',
-                            style: TextStyle(
-                                color: AppColors.textMuted, fontSize: 13),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: _showRegisterDialog,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: AppColors.bgCard,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                  color: AppColors.neonPurple.withOpacity(0.3)),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.admin_panel_settings_outlined,
+                                    color: AppColors.neonPurple, size: 18),
+                                SizedBox(width: 10),
+                                Text('Регистрация администратора',
+                                    style: TextStyle(
+                                      color: AppColors.neonPurple,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    )),
+                              ],
+                            ),
                           ),
                         ),
                       ],

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme.dart';
+import 'core/supabase_client.dart';
 import 'features/auth/login_screen.dart';
+import 'features/home/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Системный UI — прозрачный статус-бар
+  await initializeDateFormatting('ru', null);
+
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -16,7 +20,6 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.light,
   ));
 
-  // Только портретная ориентация
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -35,10 +38,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Проверяем есть ли активная сессия
+    final session = supabase.auth.currentSession;
+
     return MaterialApp(
       title: 'Столовая',
       theme: AppTheme.dark,
-      home: const LoginScreen(),
+      // Если сессия есть — сразу на главный экран, нет — на логин
+      home: session != null ? const HomeScreen() : const LoginScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
