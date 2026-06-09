@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Остаток')),
             DropdownButtonFormField<String>(
-              value: selectedCat,
+              initialValue: selectedCat,
               decoration: const InputDecoration(labelText: 'Категория'),
               items: categories
                   .where((c) => c != "Все")

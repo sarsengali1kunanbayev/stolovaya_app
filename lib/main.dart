@@ -38,14 +38,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Проверяем есть ли активная сессия
     final session = supabase.auth.currentSession;
-
     return MaterialApp(
       title: 'Столовая',
       theme: AppTheme.dark,
-      // Если сессия есть — сразу на главный экран, нет — на логин
-      home: session != null ? const HomeScreen() : const LoginScreen(),
+      home: session != null ? HomeScreen() : const LoginScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

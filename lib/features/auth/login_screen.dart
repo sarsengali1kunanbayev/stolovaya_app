@@ -36,7 +36,6 @@ class _LoginScreenState extends State<LoginScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
-    // onAuthStateChange убран — переход делаем вручную в _login()
   }
 
   @override
@@ -58,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen>
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const HomeScreen(),
+            pageBuilder: (_, __, ___) => HomeScreen(),
             transitionsBuilder: (_, anim, __, child) =>
                 FadeTransition(opacity: anim, child: child),
             transitionDuration: const Duration(milliseconds: 400),
@@ -109,33 +108,31 @@ class _LoginScreenState extends State<LoginScreen>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.neonPurple.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.admin_panel_settings,
-                          color: AppColors.neonPurple, size: 20),
+                Row(children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.neonPurple.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text('Регистрация администратора',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          )),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: const Icon(Icons.close,
-                          color: AppColors.textSecondary, size: 20),
-                    ),
-                  ],
-                ),
+                    child: const Icon(Icons.admin_panel_settings,
+                        color: AppColors.neonPurple, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text('Регистрация администратора',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        )),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: const Icon(Icons.close,
+                        color: AppColors.textSecondary, size: 20),
+                  ),
+                ]),
                 const SizedBox(height: 20),
                 TextField(
                   controller: nameCtrl,
@@ -203,7 +200,6 @@ class _LoginScreenState extends State<LoginScreen>
                                   'role': 'admin'
                                 },
                               );
-                              // Добавляем в profiles как admin
                               if (res.user != null) {
                                 await supabase.from('profiles').insert({
                                   'id': res.user!.id,
@@ -265,10 +261,9 @@ class _LoginScreenState extends State<LoginScreen>
       body: Stack(
         children: [
           Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(gradient: AppGradients.bgRadial),
-            ),
-          ),
+              child: Container(
+                  decoration:
+                      const BoxDecoration(gradient: AppGradients.bgRadial))),
           Positioned(
             top: -80,
             right: -80,

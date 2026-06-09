@@ -16,6 +16,7 @@ import 'widgets/shift_panel.dart';
 import 'widgets/cart_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/admin/admin_screen.dart';
+import '../../features/production/production_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -37,7 +38,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
-    // Сбрасываем кэш роли при каждом входе на экран
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.invalidate(userRoleProvider);
     });
@@ -190,8 +190,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         children: [
           Positioned.fill(
               child: Container(
-            decoration: const BoxDecoration(gradient: AppGradients.bgRadial),
-          )),
+                  decoration:
+                      const BoxDecoration(gradient: AppGradients.bgRadial))),
           Column(
             children: [
               SizedBox(
@@ -499,6 +499,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (_fabAnimController.value > 0) ...[
+                // Кнопка производства
+                Transform.translate(
+                  offset: Offset(0, 130 * (1 - _fabAnimController.value)),
+                  child: Opacity(
+                    opacity: _fabAnimController.value,
+                    child: _FabMenuItem(
+                      label: 'Производство',
+                      icon: Icons.factory_outlined,
+                      color: AppColors.neonGreen,
+                      onTap: () {
+                        _toggleFab();
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ProductionScreen()));
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Кнопка добавить блюдо
                 Transform.translate(
                   offset: Offset(0, 60 * (1 - _fabAnimController.value)),
                   child: Opacity(
@@ -717,10 +738,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: ElevatedButton(
                     onPressed: isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.neonPurple,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14))),
+                      backgroundColor: AppColors.neonPurple,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
                     child: isLoading
                         ? const SizedBox(
                             width: 22,
@@ -753,28 +775,29 @@ class _GradientFab extends StatelessWidget {
       required this.onTap});
   @override
   Widget build(BuildContext context) => GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4))
-            ]),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(width: 8),
-          Text(label,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14)),
-        ]),
-      ));
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4))
+              ]),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(label,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14)),
+          ]),
+        ),
+      );
 }
 
 class _FabMenuItem extends StatelessWidget {
@@ -789,27 +812,28 @@ class _FabMenuItem extends StatelessWidget {
       required this.onTap});
   @override
   Widget build(BuildContext context) => GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-            color: AppColors.bgElevated,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withOpacity(0.3)),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4))
-            ]),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: 10),
-          Text(label,
-              style: TextStyle(
-                  color: color, fontWeight: FontWeight.w600, fontSize: 14)),
-        ]),
-      ));
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+              color: AppColors.bgElevated,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: color.withOpacity(0.3)),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4))
+              ]),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 10),
+            Text(label,
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.w600, fontSize: 14)),
+          ]),
+        ),
+      );
 }
 
 class _ShimmerCard extends StatefulWidget {

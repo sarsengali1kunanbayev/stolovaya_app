@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../../core/theme.dart';
 import '../../../core/constants.dart';
 import '../../../shared/dialogs/app_dialog.dart';
-import '../../../shared/widgets/glass_card.dart';
 import '../providers/dishes_provider.dart';
 import '../providers/shift_provider.dart';
 
